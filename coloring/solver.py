@@ -63,7 +63,7 @@ def try_with_n_colors(max_colors, adjMatrix):
 
         del possibles[next_node.id]
         best_color = None
-        best_coounter = -1
+        best_counter = -1
         for color in next_node.possible_colors:
             color_counter = 0
             for v in adjMatrix[next_node.id]:
