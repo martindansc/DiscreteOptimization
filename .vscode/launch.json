@@ -10,10 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": [
-                "data/gc_100_5"
-            ]
+            "justMyCode": true
         }
     ]
 }
