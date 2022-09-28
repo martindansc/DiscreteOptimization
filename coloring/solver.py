@@ -40,6 +40,94 @@ def simple_greedy(adjMatrix):
 Value = namedtuple("Value", ["id", "possible_colors", "n_vertex"])
 
 
+def i_try_with_n_colors_optimal(solution, possibles, adjMatrix):
+    if len(possibles) == 0:
+        return True
+
+    next_node = None
+    min_options = -1
+    for i in possibles:
+        possible_next_node = possibles[i]
+        possible_min_options = len(
+            possible_next_node.possible_colors)  # - possible_next_node.n_vertex
+        if next_node == None or possible_min_options < min_options:
+            next_node = possible_next_node
+            min_options = possible_min_options
+
+    del possibles[next_node.id]
+
+    best_node_removed_colors = []
+
+    for i in range(len(next_node.possible_colors)):
+        best_color = None
+        for color in next_node.possible_colors:
+            color_counter = 0
+            for v in adjMatrix[next_node.id]:
+                if v in possibles:
+                    if color in possibles[v].possible_colors:
+                        color_counter += 1
+                        if len(possibles[v].possible_colors) == 1:
+                            color_counter += 3
+                        if len(possibles[v].possible_colors) == 2:
+                            color_counter += 1
+            if best_color == None or color_counter < best_counter:
+                best_counter = color_counter
+                best_color = color
+
+        next_node.possible_colors.remove(best_color)
+        best_node_removed_colors.append(best_color)
+        solution[next_node.id] = best_color
+
+        need_backtrack = False
+        removed_color_from_adjacent = []
+        for v in adjMatrix[next_node.id]:
+            if v in possibles:
+                try:
+                    possibles[v].possible_colors.remove(best_color)
+                    removed_color_from_adjacent.append(v)
+                except ValueError:
+                    pass
+
+                if len(possibles[v].possible_colors) <= 0:
+                    need_backtrack = True
+
+        if not need_backtrack:
+            is_solved = i_try_with_n_colors_optimal(
+                solution, possibles, adjMatrix)
+            if is_solved:
+                return True
+            else:
+                need_backtrack = True
+
+        if need_backtrack:  # We won't get here anyway if we found a solution
+            for v in removed_color_from_adjacent:
+                possibles[v].possible_colors.append(best_color)
+        else:
+            raise RuntimeError('Should not be possible')
+
+    next_node.possible_colors.extend(best_node_removed_colors)
+    possibles[next_node.id] = next_node
+    return False
+
+
+def try_with_n_colors_optimal(max_colors, adjMatrix):
+    node_count = len(adjMatrix)
+    solution = [-1] * node_count
+
+    possibles = {}
+    for i in range(node_count):
+        possible_colors = list(range(max_colors))
+        possibles[i] = Value(
+            id=i, possible_colors=possible_colors, n_vertex=len(adjMatrix[i]))
+
+    is_solution = i_try_with_n_colors_optimal(solution, possibles, adjMatrix)
+
+    if not is_solution:
+        return None
+
+    return solution
+
+
 def try_with_n_colors(max_colors, adjMatrix):
     node_count = len(adjMatrix)
     solution = [-1] * node_count
@@ -64,7 +152,7 @@ def try_with_n_colors(max_colors, adjMatrix):
         del possibles[next_node.id]
         best_color = None
         best_counter = -1
-        for color in next_node.possible_colors:
+        for j in len(next_node.possible_colors):
             color_counter = 0
             for v in adjMatrix[next_node.id]:
                 if v in possibles:
@@ -116,7 +204,7 @@ def solve_it(input_data):
     # build a trivial solution
     # every node has its own color
     best_num = node_count
-    best_solution = range(1, node_count + 1)
+    best_solution = range(0, node_count)
     for i in range(1, 10):
         used_colors, solution = simple_greedy(adjMatrix)
         if used_colors < best_num:
@@ -124,14 +212,15 @@ def solve_it(input_data):
             best_solution = solution
 
     while best_num > 1:
-        try_better = try_with_n_colors(best_num - 1, adjMatrix)
+        try_better = try_with_n_colors_optimal(
+            best_num - 1, adjMatrix)
         if try_better == None:
             break
         best_solution = try_better
         best_num = best_num - 1
 
     # prepare the solution in the specified output format
-    output_data = str(best_num) + ' ' + str(0) + '\n'
+    output_data = str(best_num) + ' ' + str(1) + '\n'
     output_data += ' '.join(map(str, best_solution))
 
     return output_data
